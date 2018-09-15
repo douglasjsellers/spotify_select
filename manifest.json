@@ -1,0 +1,10 @@
+{
+  "name": "Spotify Select",
+  "description": "Simple plugin that allows highlighted text to be converted to a spotify playlist",
+  "version": "0.1.0",
+  "permissions": ["contextMenus"],
+  "background": {
+    "scripts": ["spotify.js"]
+  },
+  "manifest_version": 2
+}
