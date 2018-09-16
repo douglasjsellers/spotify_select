@@ -2,9 +2,20 @@
   "name": "Spotify Select",
   "description": "Simple plugin that allows highlighted text to be converted to a spotify playlist",
   "version": "0.1.0",
-  "permissions": ["contextMenus"],
+  "permissions": [
+    "http://*/*",
+    "https://*/*",
+    "contextMenus",
+    "tabs"
+  ],
   "background": {
     "scripts": ["spotify.js"]
+  },
+  "externally_connectable": {
+    "ids": ["*"],
+   "matches": [
+      "*://*.reddit.com/*"
+    ]    
   },
   "manifest_version": 2
 }
