@@ -20,8 +20,6 @@ function startSpotifyOAuth() {
                                         var value = decodeURIComponent( parameter.split( "=" )[1] );
                                         parsedParameters[name] = value;
                                       }
-                                      console.log( parsedParameters );
-                                      
                                       var code = parsedParameters['code'];
                                       var req = new XMLHttpRequest();
                                       req.open("POST", "https://accounts.spotify.com/api/token", true);
@@ -29,11 +27,14 @@ function startSpotifyOAuth() {
                                       req.setRequestHeader("Authorization", "Basic " + btoa( client_id + ":" + client_secret ));
                                       req.onreadystatechange = function() {//Call a function when the state changes.
                                         if(this.readyState == XMLHttpRequest.DONE && this.status == 200) {
-                                          console.log(this.response);
+                                          var value = JSON.parse(this.response);
+                                          chrome.storage.local.set( {'spotify_auth':value}, function() {
+                                            console.log( 'spotify_auth set to ' );
+                                            console.log( value );
+                                          });
                                         }
                                       }                                      
                                       req.send("grant_type=authorization_code&code="+ encodeURIComponent(code) + "&redirect_uri=" + encodeURIComponent(redirectUri));
-                                      
                                     });  
 }
 
