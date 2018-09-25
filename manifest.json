@@ -6,8 +6,17 @@
     "http://*/*",
     "https://*/*",
     "contextMenus",
-    "tabs"
+    "tabs",
+    "identity",
+    "storage"
   ],
+ "content_scripts": [{
+     "js": ["popup.js"],
+     "matches": ["http://*/*", "https://*/*"]
+ }],  
+  "browser_action": {
+    "default_popup": "popup.html"
+  },
   "background": {
     "scripts": ["spotify.js"]
   },

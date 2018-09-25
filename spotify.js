@@ -1,3 +1,17 @@
+function startOauth() {
+  var client_id = '33cef6191c9941c9b256df2c986192c8';
+  var redirectUri = chrome.identity.getRedirectURL() + "spotify";
+
+  chrome.identity.launchWebAuthFlow({
+    "url": "https://accounts.spotify.com/authorize?client_id="+client_id+
+      "&redirect_uri="+ encodeURIComponent(redirectUri) + 
+      "&response_type=token", 
+    'interactive': true,  
+  },
+                                    function(redirect_url) { 
+                                      console.log(redirect_url);
+                                    });  
+}
 function searchSpotify( text ) {
   console.log( "Searching spotify for " + text );
   var xhr = new XMLHttpRequest();
