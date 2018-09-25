@@ -28,6 +28,7 @@ function startSpotifyOAuth() {
                                       req.onreadystatechange = function() {//Call a function when the state changes.
                                         if(this.readyState == XMLHttpRequest.DONE && this.status == 200) {
                                           var value = JSON.parse(this.response);
+                                          value['start_time'] = new Date().getTime() / 1000;
                                           chrome.storage.local.set( {'spotify_auth':value}, function() {
                                             console.log( 'spotify_auth set to ' );
                                             console.log( value );
