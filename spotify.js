@@ -12,20 +12,66 @@ function startOauth() {
                                       console.log(redirect_url);
                                     });  
 }
+
+function refresh_token( spotify_auth, function_to_call ) {
+  console.log( 'refreshing token' );
+  var client_id = '33cef6191c9941c9b256df2c986192c8';
+  var client_secret = '556031aed9c741a887bdeaf02a95b357';
+  
+  var req = new XMLHttpRequest();
+  req.open("POST", "https://accounts.spotify.com/api/token", true);
+  req.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+  req.setRequestHeader("Authorization", "Basic " + btoa( client_id + ":" + client_secret ));
+  req.onreadystatechange = function() {//Call a function when the state changes.
+    if(this.readyState == XMLHttpRequest.DONE && this.status == 200) {
+      var value = JSON.parse(this.response);
+      var internal_function = function_to_call;
+      spotify_auth['access_token'] = value['access_token']
+      spotify_auth['start_time'] = new Date().getTime() / 1000;
+      console.log( value );
+      chrome.storage.local.set( {'spotify_auth':spotify_auth}, function() {
+        internal_function( spotify_auth['access_token'] );
+      });
+    }
+  }                                      
+  req.send("grant_type=refresh_token&refresh_token="+ encodeURIComponent(spotify_auth['refresh_token']));
+  
+}
+
+function fetchSpotifyAuthorizationToken( function_to_call ) {
+  chrome.storage.local.get( ['spotify_auth'], function( value ) {
+    var internal_function = function_to_call;
+    var spotify_auth = value['spotify_auth'];
+    var current_time = new Date().getTime() / 1000;
+    console.log( "current time = " + current_time );
+    console.log( "expiration time = " + spotify_auth['start_time'] + spotify_auth['expires_in'] );
+    if( current_time > spotify_auth['start_time'] + spotify_auth['expires_in'] ) {
+      refresh_token( spotify_auth, internal_function );
+    } else
+    {
+      internal_function( spotify_auth['access_token'] );
+    }
+  });
+  
+}
+
 function searchSpotify( text ) {
   console.log( "Searching spotify for " + text );
-  var xhr = new XMLHttpRequest();
-  
-  xhr.onreadystatechange = function() {
-    if( this.readyState == 4 )
-    {
-      console.log( JSON.parse( this.responseText ) );
+  fetchSpotifyAuthorizationToken( function( token ) {
+    var xhr = new XMLHttpRequest();
+    
+    xhr.onreadystatechange = function() {
+      if( this.readyState == 4 )
+      {
+        console.log( JSON.parse( this.responseText ) );
+      }
     }
-  }
-  xhr.open("GET", "https://api.spotify.com/v1/search?type=album,track&q=" + text, true);
-  xhr.setRequestHeader( 'Authorization', 'Bearer BQAbb8m6XKx6zJ0-PKPuzEI8fodSduoJSwyb5fYiKwnTUvvZymXfhz5G4Y1lcybnnAobsabadAsX_4Ao0i7O4VRjhar9sSjoORbLrCXgCeaoL7RSG7YMQtoy-fQi0ZDIQaBJ8eCxOGeL6lH8k3eILxob16pJWmHnw46bbYMIYYhXVhhmwPUO7wPFj8fBFHXOxPUG_Uei5KcrDTvIR-pVrSFaWGMSnJMC4hQsipQ5KbjSe6txakyUUAZMqMFMwCWxuKpFQsjbGj1cahC5dVjYtSGAgQ' )
-  
-  xhr.send();  
+    xhr.open("GET", "https://api.spotify.com/v1/search?type=album,track&q=" + text, true);
+    xhr.setRequestHeader( 'Authorization', 'Bearer ' + token )
+    
+    xhr.send();  
+    
+  } );
 }
 
 chrome.runtime.onMessage.addListener(
