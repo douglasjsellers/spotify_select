@@ -117,7 +117,23 @@ function addTrackToPlaylist( track ) {
   console.log( track );
   findOrCreatePlaylist( function (playlistid )
                         {
-                          console.log( 'Find playlist id' );
+                          fetchSpotifyAuthorizationToken( function( token ) {
+                          
+                            var xhr = new XMLHttpRequest();
+                            xhr.onreadystatechange = function() {
+                              if( this.readyState == 4 && ( this.status >= 200 || this.status <= 299 ) )
+                              {
+
+                                var json = JSON.parse( this.responseText );
+                                console.log( 'created track' );
+                                console.log( json );
+                              }
+                            }
+                            xhr.open("POST", "https://api.spotify.com/v1/playlists/" + playlistid + "/tracks" , true);
+                            xhr.setRequestHeader("Content-Type", "application/json");
+                            xhr.setRequestHeader( 'Authorization', 'Bearer ' + token )    
+                            xhr.send(JSON.stringify({ uris: [track.uri] }));
+                          })
                         } );
   
 }
