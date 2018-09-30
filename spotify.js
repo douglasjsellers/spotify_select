@@ -43,8 +43,6 @@ function fetchSpotifyAuthorizationToken( function_to_call ) {
     var internal_function = function_to_call;
     var spotify_auth = value['spotify_auth'];
     var current_time = new Date().getTime() / 1000;
-    console.log( "current time = " + current_time );
-    console.log( "expiration time = " + spotify_auth['start_time'] + spotify_auth['expires_in'] );
     if( current_time > spotify_auth['start_time'] + spotify_auth['expires_in'] ) {
       refresh_token( spotify_auth, internal_function );
     } else
@@ -52,6 +50,75 @@ function fetchSpotifyAuthorizationToken( function_to_call ) {
       internal_function( spotify_auth['access_token'] );
     }
   });
+  
+}
+
+
+function createPlaylist( function_to_run_on_success ) {
+  fetchSpotifyAuthorizationToken( function( token ) {  
+    var xhr = new XMLHttpRequest();
+    
+    xhr.onreadystatechange = function() {
+      if( this.readyState == 4 && ( this.status >= 200 || this.status <= 299 ) )
+      {
+
+        var json = JSON.parse( this.responseText );
+        console.log( json );
+        var playlistId = json['id'];
+        function_to_run_on_success( playlistId );
+      }
+    }
+    xhr.open("POST", "https://api.spotify.com/v1/me/playlists" , true);
+    xhr.setRequestHeader("Content-Type", "application/json");
+    xhr.setRequestHeader( 'Authorization', 'Bearer ' + token )    
+    xhr.send(JSON.stringify({ name: "Select2Spotify", public: false }));
+  } );
+  
+}
+
+function findOrCreatePlaylist( function_to_run_on_success ) {
+  fetchSpotifyAuthorizationToken( function( token ) {  
+    var xhr = new XMLHttpRequest();
+    
+    xhr.onreadystatechange = function() {
+      if( this.readyState == 4 && ( this.status >= 200 || this.status <= 299 ) )
+      {
+
+        var json = JSON.parse( this.responseText );
+        var playlists = json['items'];
+        var i = 0;
+        var playlistId = null;
+        for( i = 0; i < playlists.length; i++ )
+        {
+          if( playlists[i].name == 'Select2Spotify' )
+          {
+            playlistId = playlists[i].id
+          }
+        }
+
+        if( playlistId != null )
+        {
+          function_to_run_on_success( playlistId );
+        } else
+        {
+          createPlaylist( function_to_run_on_success );
+        }
+      }
+    }
+    xhr.open("GET", "https://api.spotify.com/v1/me/playlists" , true);
+    xhr.setRequestHeader( 'Authorization', 'Bearer ' + token )
+    xhr.send();
+  } );
+}
+  
+
+function addTrackToPlaylist( track ) {
+  console.log( 'adding track ' );
+  console.log( track );
+  findOrCreatePlaylist( function (playlistid )
+                        {
+                          console.log( 'Find playlist id' );
+                        } );
   
 }
 
@@ -63,12 +130,14 @@ function searchSpotify( text ) {
     xhr.onreadystatechange = function() {
       if( this.readyState == 4 )
       {
-        console.log( JSON.parse( this.responseText ) );
+        var json = JSON.parse( this.responseText );
+        var track = json['tracks']['items'][0];
+        addTrackToPlaylist( track );
+        
       }
     }
-    xhr.open("GET", "https://api.spotify.com/v1/search?type=album,track&q=" + text, true);
+    xhr.open("GET", "https://api.spotify.com/v1/search?type=track&q=" + text, true);
     xhr.setRequestHeader( 'Authorization', 'Bearer ' + token )
-    
     xhr.send();  
     
   } );
@@ -80,6 +149,7 @@ chrome.runtime.onMessage.addListener(
     console.log( request );
     searchSpotify( request.selection[0] );
   });
+
 function genericOnClick(info, tab) {}
 var id = chrome.contextMenus.create({"title": "Send Albums To Spotify", "contexts":["selection"],
                                        "onclick": genericOnClick});

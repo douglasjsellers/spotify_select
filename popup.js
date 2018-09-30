@@ -5,7 +5,7 @@ function startSpotifyOAuth() {
   chrome.identity.launchWebAuthFlow({
     "url": "https://accounts.spotify.com/authorize?client_id="+client_id+
       "&redirect_uri="+ encodeURIComponent(redirectUri) + 
-      "&response_type=code&scope=app-remote-control", 
+      "&response_type=code&scope=app-remote-control%20playlist-read-private%20playlist-modify-private%20playlist-modify-public%20user-library-read%20playlist-modify", 
     'interactive': true,  
   },
                                     function(redirect_url)
@@ -39,8 +39,10 @@ function startSpotifyOAuth() {
                                     });  
 }
 
-document.getElementById("clickme").addEventListener("click", function(){
-  console.log( 'launching' );  
-  startSpotifyOAuth();
-});
-console.log( "adding listener" );
+if( document.getElementById("clickme") ) {
+  document.getElementById("clickme").addEventListener("click", function(){
+    console.log( 'launching' );  
+    startSpotifyOAuth();
+  });
+  console.log( "adding listener" );
+}
