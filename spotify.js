@@ -1,3 +1,66 @@
+class Selection {
+  constructor( lines ) {
+    this.queue = lines;
+    this.current_position = 0;
+    this.results = [];
+  }
+
+  hasMore() {
+    return this.current_position < this.queue.length;
+  }
+  
+  next() {
+    var to_return = this.queue[this.current_position];
+    this.current_position = this.current_position + 1;
+    return to_return;
+  }
+
+  addResult( result ) {
+    this.results.push( result );
+  }
+}
+
+class SpotifyGetRequest {
+  constructor( url ) {
+    this.url = url;
+  }
+
+  results( call_back ) {
+    var urlToCall = this.url;
+    
+    fetchSpotifyAuthorizationToken( function( token ) {
+      var xhr = new XMLHttpRequest();
+      
+      xhr.onreadystatechange = function() {
+        if( this.readyState == 4 )
+        {
+          call_back( this.responseText );
+        }
+      }
+      xhr.open("GET", "https://api.spotify.com" + urlToCall, true);
+      xhr.setRequestHeader( 'Authorization', 'Bearer ' + token )
+      xhr.send();  
+    } );
+    
+  }
+}
+  
+class SpotifySearch {
+  constructor( text ) {
+    this.text = text
+  }
+
+  results( results_call_back ) {
+    var textSearch = this.text;
+    var getRequest = new SpotifyGetRequest( "/v1/search?type=track&q=" + textSearch );
+    getRequest.results( function ( responseText ) {
+      var json = JSON.parse( responseText );
+      var track = json['tracks']['items'][0];
+      results_call_back( track );
+    } );
+  }
+}
+
 function startOauth() {
   var client_id = '33cef6191c9941c9b256df2c986192c8';
   var redirectUri = chrome.identity.getRedirectURL() + "spotify";
@@ -159,11 +222,49 @@ function searchSpotify( text ) {
   } );
 }
 
+function tryToCleanText( text ) {
+  return text.replace(/^[^a-zA-Z0-9]*[0-9]+[.]?/gi, '');  
+}
+
+function performSearch( selection, textToSearch, retried ) {
+  console.log( "Searching for " + textToSearch );
+  var spotifySearch = new SpotifySearch( textToSearch );
+  spotifySearch.results( function( track )
+                         {
+                           if( track )
+                           {
+                             console.log( track.uri );
+                             selection.addResult( track.uri );        
+                           } else if( !retried )
+                           {
+                             performSearch( selection, tryToCleanText( textToSearch ), true );
+                           }
+                           else
+                           {
+                             console.log( "can't find ");
+                           }
+                           processSelection( selection );
+                         } ); 
+}
+
+function processSelection( selection ) {
+  if( selection.hasMore() )
+  {
+    performSearch( selection, selection.next(), false );
+  } else
+  {
+    console.log( "done processing" );
+  }
+    
+}
+
 chrome.runtime.onMessage.addListener(
   function(request, sender, sendResponse) {
     sendResponse(true);
     console.log( request );
-    searchSpotify( request.selection[0] );
+    //    searchSpotify( request.selection[0] );
+    var selection = new Selection( request.selection );
+    processSelection( selection );
   });
 
 function genericOnClick(info, tab) {}
