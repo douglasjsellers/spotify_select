@@ -45,12 +45,15 @@ class SpotifyGetRequest {
   }
 }
   
-class SpotifySearch {
-  constructor( text ) {
+class SpotifySearch
+{
+  constructor( text )
+  {
     this.text = text
   }
 
-  results( results_call_back ) {
+  results( results_call_back )
+  {
     var textSearch = this.text;
     var getRequest = new SpotifyGetRequest( "/v1/search?type=track&q=" + textSearch );
     getRequest.results( function ( responseText ) {
@@ -58,6 +61,42 @@ class SpotifySearch {
       var track = json['tracks']['items'][0];
       results_call_back( track );
     } );
+  }
+}
+
+class FindPlaylist
+{
+  constructor( playlist_name )
+  {
+    this.name = playlist_name;
+  }
+
+  results( found, failed )
+  {
+    var playlist_name = this.name;
+    fetchSpotifyAuthorizationToken( function( token ) {
+                                    var getRequest = new SpotifyGetRequest( "/v1/me/playlists" );
+                                    getRequest.results( function ( responseText ) {
+                                      var json = JSON.parse( responseText );
+                                      var playlistId = json['items'].find( function( playlist ) { return playlist.name == playlist_name } );
+                                      playlistId != null ? found( playlistId ) : failed();
+                                    } );
+    });
+  }
+}
+
+class Playlist
+{
+  constructor( playlist_name )
+  {
+    this.name = playlist_name;
+  }
+
+  findOrCreate( success_function )
+  {
+    var playlistFinder = new FindPlaylist( this.name );
+    playlistFinder.results( function( playlist_id ) { console.log( "found" ) }, function() { console.log( 'not found' ) } );
+    success_function( 'not found' );
   }
 }
 
@@ -139,40 +178,6 @@ function createPlaylist( function_to_run_on_success ) {
   
 }
 
-function findOrCreatePlaylist( function_to_run_on_success ) {
-  fetchSpotifyAuthorizationToken( function( token ) {  
-    var xhr = new XMLHttpRequest();
-    
-    xhr.onreadystatechange = function() {
-      if( this.readyState == 4 && ( this.status >= 200 || this.status <= 299 ) )
-      {
-
-        var json = JSON.parse( this.responseText );
-        var playlists = json['items'];
-        var i = 0;
-        var playlistId = null;
-        for( i = 0; i < playlists.length; i++ )
-        {
-          if( playlists[i].name == 'Select2Spotify' )
-          {
-            playlistId = playlists[i].id
-          }
-        }
-
-        if( playlistId != null )
-        {
-          function_to_run_on_success( playlistId );
-        } else
-        {
-          createPlaylist( function_to_run_on_success );
-        }
-      }
-    }
-    xhr.open("GET", "https://api.spotify.com/v1/me/playlists" , true);
-    xhr.setRequestHeader( 'Authorization', 'Bearer ' + token )
-    xhr.send();
-  } );
-}
   
 
 function addTrackToPlaylist( track ) {
@@ -201,26 +206,6 @@ function addTrackToPlaylist( track ) {
   
 }
 
-function searchSpotify( text ) {
-  console.log( "Searching spotify for " + text );
-  fetchSpotifyAuthorizationToken( function( token ) {
-    var xhr = new XMLHttpRequest();
-    
-    xhr.onreadystatechange = function() {
-      if( this.readyState == 4 )
-      {
-        var json = JSON.parse( this.responseText );
-        var track = json['tracks']['items'][0];
-        addTrackToPlaylist( track );
-        
-      }
-    }
-    xhr.open("GET", "https://api.spotify.com/v1/search?type=track&q=" + text, true);
-    xhr.setRequestHeader( 'Authorization', 'Bearer ' + token )
-    xhr.send();  
-    
-  } );
-}
 
 function tryToCleanText( text ) {
   return text.replace(/^[^a-zA-Z0-9]*[0-9]+[.]?/gi, '');  
@@ -234,7 +219,8 @@ function performSearch( selection, textToSearch, retried ) {
                            if( track )
                            {
                              console.log( track.uri );
-                             selection.addResult( track.uri );        
+                             selection.addResult( track.uri );
+                             processSelection( selection );                             
                            } else if( !retried )
                            {
                              performSearch( selection, tryToCleanText( textToSearch ), true );
@@ -242,9 +228,18 @@ function performSearch( selection, textToSearch, retried ) {
                            else
                            {
                              console.log( "can't find ");
+                             processSelection( selection );                             
                            }
-                           processSelection( selection );
+
                          } ); 
+}
+
+function addToPlaylist( selection ) {
+  var playlist = new Playlist( "Spotify Select" );
+  playlist.findOrCreate( function( playlist_id )
+                         {
+                           console.log( "Playlist id " + playlist_id );
+                         } );
 }
 
 function processSelection( selection ) {
@@ -253,7 +248,7 @@ function processSelection( selection ) {
     performSearch( selection, selection.next(), false );
   } else
   {
-    console.log( "done processing" );
+    addToPlaylist( selection );
   }
     
 }
