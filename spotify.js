@@ -18,6 +18,11 @@ class Selection {
   addResult( result ) {
     this.results.push( result );
   }
+
+  getResults()
+  {
+    return this.results;
+  }
 }
 
 class SpotifyGetRequest {
@@ -92,6 +97,23 @@ class SpotifySearch
   }
 }
 
+class AddTracksToPlaylist
+{
+  constructor( playlist_id )
+  {
+    this.playlist_id = playlist_id;
+  }
+  
+  request( uris, success_function )
+  {
+    console.log( uris );
+    var postRequest = new SpotifyPostRequest( "/v1/playlists/" + this.playlist_id + "/tracks", { uris: uris } );
+    postRequest.results( function ( responseText )
+                         {
+                           success_function();
+                         } );
+  }
+}
 class CreatePlaylist
 {
   constructor( playlist_name )
@@ -274,7 +296,13 @@ function addToPlaylist( selection ) {
   var playlist = new Playlist( "Spotify Select" );
   playlist.findOrCreate( function( playlist_id )
                          {
-                           console.log( "Playlist id " + playlist_id );
+
+                           var add = new AddTracksToPlaylist( playlist_id );
+                           add.request( selection.getResults(), function()
+                                        {
+                                          console.log( 'tracks added' );
+                                        } );
+                             
                          } );
 }
 
