@@ -44,7 +44,35 @@ class SpotifyGetRequest {
     
   }
 }
+
+class SpotifyPostRequest
+{
+  constructor( url, data ) {
+    this.url = url;
+    this.data = data
+  }
   
+  results( callback )
+  {
+    var xhr = new XMLHttpRequest();
+    var urlToCall = this.url;
+    var dataToUse = this.data
+    fetchSpotifyAuthorizationToken( function( token ) {
+      xhr.onreadystatechange = function() {
+        if( this.readyState == 4 && ( this.status >= 200 || this.status <= 299 ) )
+        {
+          callback( this.responseText );
+        }
+      }
+      xhr.open("POST", "https://api.spotify.com" + urlToCall , true);
+      xhr.setRequestHeader("Content-Type", "application/json");
+      xhr.setRequestHeader( 'Authorization', 'Bearer ' + token )    
+      xhr.send(JSON.stringify( dataToUse ));
+      
+    } );    
+  }
+}
+
 class SpotifySearch
 {
   constructor( text )
@@ -64,6 +92,28 @@ class SpotifySearch
   }
 }
 
+class CreatePlaylist
+{
+  constructor( playlist_name )
+  {
+    this.name = playlist_name;
+  }
+
+  results( success_function )
+  {
+    var playlist_name = this.name;
+    
+    var postRequest = new SpotifyPostRequest( "/v1/me/playlists", { name: "Spotify Select", public: false } );
+    postRequest.results( function ( responseText ) {
+      var json = JSON.parse( responseText );
+      console.log( json );
+      var playlistId = json['id'];
+      success_function( playlistId );
+    } );
+  }
+  
+}
+
 class FindPlaylist
 {
   constructor( playlist_name )
@@ -74,14 +124,13 @@ class FindPlaylist
   results( found, failed )
   {
     var playlist_name = this.name;
-    fetchSpotifyAuthorizationToken( function( token ) {
-                                    var getRequest = new SpotifyGetRequest( "/v1/me/playlists" );
-                                    getRequest.results( function ( responseText ) {
-                                      var json = JSON.parse( responseText );
-                                      var playlistId = json['items'].find( function( playlist ) { return playlist.name == playlist_name } );
-                                      playlistId != null ? found( playlistId ) : failed();
-                                    } );
-    });
+    var getRequest = new SpotifyGetRequest( "/v1/me/playlists" );
+    getRequest.results( function ( responseText ) {
+      var json = JSON.parse( responseText );
+      var playlist = json['items'].find( function( playlist ) { return playlist.name == playlist_name } );
+      playlist != null ? found( playlist['id'] ) : failed();
+    } );
+
   }
 }
 
@@ -95,8 +144,18 @@ class Playlist
   findOrCreate( success_function )
   {
     var playlistFinder = new FindPlaylist( this.name );
-    playlistFinder.results( function( playlist_id ) { console.log( "found" ) }, function() { console.log( 'not found' ) } );
-    success_function( 'not found' );
+    var playlistName = this.name;
+    playlistFinder.results( function( playlist_id )
+                            {
+                              success_function( playlist_id );
+                            },
+                            function()
+                            {
+                              var playlistCreator = new CreatePlaylist( playlistName );
+                              playlistCreator.results( success_function );
+                            }
+                          );
+
   }
 }
 
@@ -152,29 +211,6 @@ function fetchSpotifyAuthorizationToken( function_to_call ) {
       internal_function( spotify_auth['access_token'] );
     }
   });
-  
-}
-
-
-function createPlaylist( function_to_run_on_success ) {
-  fetchSpotifyAuthorizationToken( function( token ) {  
-    var xhr = new XMLHttpRequest();
-    
-    xhr.onreadystatechange = function() {
-      if( this.readyState == 4 && ( this.status >= 200 || this.status <= 299 ) )
-      {
-
-        var json = JSON.parse( this.responseText );
-        console.log( json );
-        var playlistId = json['id'];
-        function_to_run_on_success( playlistId );
-      }
-    }
-    xhr.open("POST", "https://api.spotify.com/v1/me/playlists" , true);
-    xhr.setRequestHeader("Content-Type", "application/json");
-    xhr.setRequestHeader( 'Authorization', 'Bearer ' + token )    
-    xhr.send(JSON.stringify({ name: "Select2Spotify", public: false }));
-  } );
   
 }
 
