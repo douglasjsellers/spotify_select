@@ -317,21 +317,20 @@ function processSelection( selection ) {
     
 }
 
-chrome.runtime.onMessage.addListener(
-  function(request, sender, sendResponse) {
-    sendResponse(true);
-    console.log( request );
-    //    searchSpotify( request.selection[0] );
-    var selection = new Selection( request.selection );
-    processSelection( selection );
-  });
 
-function genericOnClick(info, tab) {}
-var id = chrome.contextMenus.create({"title": "Send Albums To Spotify", "contexts":["selection"],
-                                       "onclick": genericOnClick});
-var id = chrome.contextMenus.create({"title": "Send Songs To Spotify", "contexts":["selection"],
-                                       "onclick": genericOnClick});
-chrome.contextMenus.onClicked.addListener(function(info, tab){
-  chrome.tabs.executeScript(tab.id, {file: "get_selection.js"})
-});
-console.log( 'loaded' );
+function sendSongsToPlaylist(info, tab)
+{
+  console.log( info );
+  console.log( tab );
+  chrome.runtime.onMessage.addListener(
+    function(request, sender, sendResponse)
+    {
+      sendResponse(true);
+      var selection = new Selection( request.selection );
+      processSelection( selection );
+    });
+  chrome.tabs.executeScript(tab.id, {file: "get_selection.js"})  
+}
+
+var id = chrome.contextMenus.create({"title": "Send List of Songs To Spotify Playlist", "contexts":["selection"],
+                                       "onclick": sendSongsToPlaylist});
