@@ -50,6 +50,35 @@ class SpotifyGetRequest {
   }
 }
 
+class SpotifyPutRequest
+{
+  constructor( url, data ) {
+    this.url = url;
+    this.data = data
+  }
+  
+  results( callback )
+  {
+    var xhr = new XMLHttpRequest();
+    var urlToCall = this.url;
+    var dataToUse = this.data
+    fetchSpotifyAuthorizationToken( function( token ) {
+      xhr.onreadystatechange = function() {
+        if( this.readyState == 4 && ( this.status >= 200 || this.status <= 299 ) )
+        {
+          callback( this.responseText );
+        }
+      }
+      xhr.open("PUT", "https://api.spotify.com" + urlToCall , true);
+      xhr.setRequestHeader("Content-Type", "application/json");
+      xhr.setRequestHeader( 'Authorization', 'Bearer ' + token )
+      console.log( dataToUse );
+      xhr.send(JSON.stringify(dataToUse));
+      
+    } );    
+  }
+}
+
 class SpotifyPostRequest
 {
   constructor( url, data ) {
@@ -278,7 +307,7 @@ function performSearch( selection, textToSearch, retried ) {
                            {
                              console.log( track.uri );
                              selection.addResult( track.uri );
-                             processSelection( selection );                             
+                             addSelectionToPlaylist( selection );                             
                            } else if( !retried )
                            {
                              performSearch( selection, tryToCleanText( textToSearch ), true );
@@ -286,7 +315,7 @@ function performSearch( selection, textToSearch, retried ) {
                            else
                            {
                              console.log( "can't find ");
-                             processSelection( selection );                             
+                             addSelectionToPlaylist( selection );                             
                            }
 
                          } ); 
@@ -296,7 +325,7 @@ function addToPlaylist( selection ) {
   var playlist = new Playlist( "Spotify Select" );
   playlist.findOrCreate( function( playlist_id )
                          {
-
+p
                            var add = new AddTracksToPlaylist( playlist_id );
                            add.request( selection.getResults(), function()
                                         {
@@ -306,7 +335,7 @@ function addToPlaylist( selection ) {
                          } );
 }
 
-function processSelection( selection ) {
+function addSelectionToPlaylist( selection ) {
   if( selection.hasMore() )
   {
     performSearch( selection, selection.next(), false );
@@ -317,20 +346,73 @@ function processSelection( selection ) {
     
 }
 
+function playTrack( track )
+{
+  var putRequest = new SpotifyPutRequest( "/v1/me/player/play", {uris:[track.uri]} );
+  putRequest.results( function( responseText)
+                      {
+                        console.log( responseText );
+                      } );
+  
+}
+
+function findAndPlaySelectedSong( textToSearchFor, retried )
+{
+  var spotifySearch = new SpotifySearch( textToSearchFor );
+  spotifySearch.results( function( track )
+                         {
+                           if( track )
+                           {
+                             playTrack( track );
+                           } else if( !retried )
+                           {
+                             findAndPlaySelectedSong( selection, tryToCleanText( textToSearch ), true );
+                           }
+                           else
+                           {
+                             console.log( "can't find ");
+                           }
+
+                         } ); 
+  
+}
 
 function sendSongsToPlaylist(info, tab)
 {
-  console.log( info );
-  console.log( tab );
   chrome.runtime.onMessage.addListener(
     function(request, sender, sendResponse)
     {
       sendResponse(true);
       var selection = new Selection( request.selection );
-      processSelection( selection );
+      addSelectionToPlaylist( selection );
     });
   chrome.tabs.executeScript(tab.id, {file: "get_selection.js"})  
 }
 
-var id = chrome.contextMenus.create({"title": "Send List of Songs To Spotify Playlist", "contexts":["selection"],
-                                       "onclick": sendSongsToPlaylist});
+function playSong( info, tab )
+{
+  console.log( 'playing song' );
+  chrome.runtime.onMessage.addListener(
+    function(request, sender, sendResponse)
+    {
+      sendResponse(true);
+      var selection = new Selection( request.selection );
+      findAndPlaySelectedSong( selection );
+    });
+  chrome.tabs.executeScript(tab.id, {file: "get_selection.js"})  
+  
+}
+
+var id = chrome.contextMenus.create(
+  {
+    "title": "Send List of Songs To Spotify Playlist",
+    "contexts":["selection"],
+    "onclick": sendSongsToPlaylist
+  } );
+var playsong_id = chrome.contextMenus.create(
+  {
+    "title": "Play highlighted Song",
+    "contexts":["selection"],
+    "onclick": playSong
+  }
+);
