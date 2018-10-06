@@ -72,7 +72,6 @@ class SpotifyPutRequest
       xhr.open("PUT", "https://api.spotify.com" + urlToCall , true);
       xhr.setRequestHeader("Content-Type", "application/json");
       xhr.setRequestHeader( 'Authorization', 'Bearer ' + token )
-      console.log( dataToUse );
       xhr.send(JSON.stringify(dataToUse));
       
     } );    
@@ -111,7 +110,7 @@ class SpotifySearch
 {
   constructor( text )
   {
-    this.text = text
+    this.text = text;
   }
 
   results( results_call_back )
@@ -135,7 +134,6 @@ class AddTracksToPlaylist
   
   request( uris, success_function )
   {
-    console.log( uris );
     var postRequest = new SpotifyPostRequest( "/v1/playlists/" + this.playlist_id + "/tracks", { uris: uris } );
     postRequest.results( function ( responseText )
                          {
@@ -157,7 +155,6 @@ class CreatePlaylist
     var postRequest = new SpotifyPostRequest( "/v1/me/playlists", { name: "Spotify Select", public: false } );
     postRequest.results( function ( responseText ) {
       var json = JSON.parse( responseText );
-      console.log( json );
       var playlistId = json['id'];
       success_function( playlistId );
     } );
@@ -221,12 +218,10 @@ function startOauth() {
     'interactive': true,  
   },
                                     function(redirect_url) { 
-                                      console.log(redirect_url);
                                     });  
 }
 
 function refresh_token( spotify_auth, function_to_call ) {
-  console.log( 'refreshing token' );
   var client_id = '33cef6191c9941c9b256df2c986192c8';
   var client_secret = '556031aed9c741a887bdeaf02a95b357';
   
@@ -240,7 +235,6 @@ function refresh_token( spotify_auth, function_to_call ) {
       var internal_function = function_to_call;
       spotify_auth['access_token'] = value['access_token']
       spotify_auth['start_time'] = new Date().getTime() / 1000;
-      console.log( value );
       chrome.storage.local.set( {'spotify_auth':spotify_auth}, function() {
         internal_function( spotify_auth['access_token'] );
       });
@@ -268,8 +262,6 @@ function fetchSpotifyAuthorizationToken( function_to_call ) {
   
 
 function addTrackToPlaylist( track ) {
-  console.log( 'adding track ' );
-  console.log( track );
   findOrCreatePlaylist( function (playlistid )
                         {
                           fetchSpotifyAuthorizationToken( function( token ) {
@@ -280,8 +272,6 @@ function addTrackToPlaylist( track ) {
                               {
 
                                 var json = JSON.parse( this.responseText );
-                                console.log( 'created track' );
-                                console.log( json );
                               }
                             }
                             xhr.open("POST", "https://api.spotify.com/v1/playlists/" + playlistid + "/tracks" , true);
@@ -299,13 +289,11 @@ function tryToCleanText( text ) {
 }
 
 function performSearch( selection, textToSearch, retried ) {
-  console.log( "Searching for " + textToSearch );
   var spotifySearch = new SpotifySearch( textToSearch );
   spotifySearch.results( function( track )
                          {
                            if( track )
                            {
-                             console.log( track.uri );
                              selection.addResult( track.uri );
                              addSelectionToPlaylist( selection );                             
                            } else if( !retried )
@@ -325,11 +313,9 @@ function addToPlaylist( selection ) {
   var playlist = new Playlist( "Spotify Select" );
   playlist.findOrCreate( function( playlist_id )
                          {
-p
                            var add = new AddTracksToPlaylist( playlist_id );
                            add.request( selection.getResults(), function()
                                         {
-                                          console.log( 'tracks added' );
                                         } );
                              
                          } );
@@ -351,7 +337,7 @@ function playTrack( track )
   var putRequest = new SpotifyPutRequest( "/v1/me/player/play", {uris:[track.uri]} );
   putRequest.results( function( responseText)
                       {
-                        console.log( responseText );
+                        console.log( "Playing song" );
                       } );
   
 }
@@ -391,24 +377,17 @@ function sendSongsToPlaylist(info, tab)
 
 function playSong( info, tab )
 {
-  console.log( 'playing song' );
   chrome.runtime.onMessage.addListener(
     function(request, sender, sendResponse)
     {
       sendResponse(true);
       var selection = new Selection( request.selection );
-      findAndPlaySelectedSong( selection );
+      findAndPlaySelectedSong( selection.next() );
     });
   chrome.tabs.executeScript(tab.id, {file: "get_selection.js"})  
   
 }
 
-var id = chrome.contextMenus.create(
-  {
-    "title": "Send List of Songs To Spotify Playlist",
-    "contexts":["selection"],
-    "onclick": sendSongsToPlaylist
-  } );
 var playsong_id = chrome.contextMenus.create(
   {
     "title": "Play highlighted Song",
@@ -416,3 +395,10 @@ var playsong_id = chrome.contextMenus.create(
     "onclick": playSong
   }
 );
+
+var id = chrome.contextMenus.create(
+  {
+    "title": "Send List of Songs To Spotify Playlist",
+    "contexts":["selection"],
+    "onclick": sendSongsToPlaylist
+  } );
