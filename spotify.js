@@ -1,5 +1,7 @@
 function tryToCleanText( text ) {
-  return text.replace(/^[^a-zA-Z0-9]*[0-9]+[.]?/gi, '');  
+  text = text.replace(/^[^a-zA-Z0-9]*[0-9]+[.]?/gi, '');
+  text = text.replace(/\s+/g,' ').trim();
+  return text;
 }
 
 function performSearch( selection, textToSearch, retried ) {
