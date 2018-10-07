@@ -56,6 +56,16 @@ function playTrack( track )
   
 }
 
+function playAlbum( album )
+{
+  var putRequest = new SpotifyPutRequest( "/v1/me/player/play", {context_uri:album.uri} );
+  putRequest.results( function( responseText)
+                      {
+                        console.log( "Playing Album" );
+                      } );
+  
+}
+
 function findAndPlaySelectedSong( textToSearchFor, retried )
 {
   var spotifySearch = new SpotifySearch( textToSearchFor );
@@ -77,19 +87,33 @@ function findAndPlaySelectedSong( textToSearchFor, retried )
   
 }
 
+function findAndPlaySelectedAlbum( textToSearchFor, retried )
+{
+  var spotifySearch = new SpotifySearch( textToSearchFor, "album" );
+  spotifySearch.results( function( album )
+                         {
+                           if( album )
+                           {
+                             playAlbum( album );
+                           } else if( !retried )
+                           {
+                             findAndPlaySelectedAlbum(  tryToCleanText( textToSearchFor ), true );
+                           }
+                           else
+                           {
+                             console.log( "can't find ");
+                           }
+
+                         } ); 
+  
+}
+
 var actionForSelection = null;
 
-function sendSongsToPlaylist(info, tab)
+function genericClickHandler( info, tab )
 {
   actionForSelection =  info.menuItemId;
   chrome.tabs.executeScript(tab.id, {file: "get_selection.js"})  
-}
-
-function playSong( info, tab )
-{
-  actionForSelection =  info.menuItemId;  
-  chrome.tabs.executeScript(tab.id, {file: "get_selection.js"})  
-  
 }
 
 chrome.runtime.onMessage.addListener(
@@ -103,24 +127,37 @@ chrome.runtime.onMessage.addListener(
     } else if( actionForSelection == "add_to_playlist" )
     {
       addSelectionToPlaylist( selection );      
+    } else if( actionForSelection == "play_album" )
+    {
+      findAndPlaySelectedAlbum( selection.next() );      
     }
     actionForSelection = null;
 
   });
 
+
 var playsong_id = chrome.contextMenus.create(
   {
-    "title": "Play highlighted Song",
+    "title": "Play Highlighted Song",
     "id": "play_song",
     "contexts":["selection"],
-    "onclick": playSong
+    "onclick": genericClickHandler
   }
 );
 
+var play_albumn = chrome.contextMenus.create(
+  {
+    "title": "Play Highlight Album",
+    "id" : "play_album",
+    "contexts":["selection"],
+    "onclick": genericClickHandler
+  } );
+
 var id = chrome.contextMenus.create(
   {
-    "title": "Send List of Songs To Spotify Playlist",
+    "title": "Send Highlighted Songs To Spotify Playlist",
     "id" : "add_to_playlist",
     "contexts":["selection"],
-    "onclick": sendSongsToPlaylist
+    "onclick": genericClickHandler
   } );
+

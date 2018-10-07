@@ -1,4 +1,3 @@
-
 class SpotifyGetRequest {
   constructor( url ) {
     this.url = url;
@@ -82,18 +81,20 @@ class SpotifyPostRequest
 
 class SpotifySearch
 {
-  constructor( text )
+  constructor( text, type )
   {
+    this.type = type || "track"
     this.text = text;
   }
 
   results( results_call_back )
   {
     var textSearch = this.text;
-    var getRequest = new SpotifyGetRequest( "/v1/search?type=track&q=" + textSearch );
+    var typeSearch = this.type;
+    var getRequest = new SpotifyGetRequest( "/v1/search?type=" + this.type + "&q=" + textSearch );
     getRequest.results( function ( responseText ) {
       var json = JSON.parse( responseText );
-      var track = json['tracks']['items'][0];
+      var track = json[typeSearch + 's']['items'][0];
       results_call_back( track );
     } );
   }
