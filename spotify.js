@@ -45,7 +45,6 @@ function addSelectionToPlaylist( selection ) {
   {
     addToPlaylist( selection );
   }
-    
 }
 
 function playTrack( track )
@@ -55,7 +54,6 @@ function playTrack( track )
                       {
                         console.log( "Playing Track" );
                       } );
-  
 }
 
 function playAlbum( album )
@@ -86,7 +84,6 @@ function findAndPlaySelectedSong( textToSearchFor, retried )
                            }
 
                          } ); 
-  
 }
 
 function findAndPlaySelectedAlbum( textToSearchFor, retried )
@@ -107,8 +104,8 @@ function findAndPlaySelectedAlbum( textToSearchFor, retried )
                            }
 
                          } ); 
-  
 }
+
 function fetchAdditionalInformationAboutTracksAndPlayTrackWithHighestViewCount( track_list )
 {
   var track_ids = track_list.map( function( track )
@@ -124,7 +121,6 @@ function fetchAdditionalInformationAboutTracksAndPlayTrackWithHighestViewCount( 
                      
                    }
                  );
-
 }
 
 function fetchAlbumTracksAndPlayTrackWithHighestViewCount( album )
@@ -182,9 +178,7 @@ chrome.runtime.onMessage.addListener(
     {
       findAndPlayBestSongOnSelectedAlbum( selection.next() );
     }
-    
     actionForSelection = null;
-
   });
 
 
