@@ -1,10 +1,12 @@
 class SpotifyGetRequest {
-  constructor( url ) {
+  constructor( url, variables ) {
+    this.variables = variables || null
     this.url = url;
   }
 
   results( call_back ) {
     var urlToCall = this.url;
+    var variables = this.variables;
     
     fetchSpotifyAuthorizationToken( function( token ) {
       var xhr = new XMLHttpRequest();
@@ -17,7 +19,13 @@ class SpotifyGetRequest {
       }
       xhr.open("GET", "https://api.spotify.com" + urlToCall, true);
       xhr.setRequestHeader( 'Authorization', 'Bearer ' + token )
-      xhr.send();  
+      if( variables )
+      {
+        xhr.send( variables );
+      } else
+      {
+        xhr.send();
+      }
     } );
     
   }
@@ -137,6 +145,24 @@ class CreatePlaylist
   
 }
 
+class AlbumTrackList
+{
+  constructor( album_id )
+  {
+    this.album_id = album_id;
+  }
+
+  results( success_function )
+  {
+    var getRequest = new SpotifyGetRequest( "/v1/albums/" + this.album_id + "/tracks" );
+    getRequest.results( function ( responseText ) {
+      var json = JSON.parse( responseText );
+      success_function( json['items'] );
+    } );
+
+  }
+}
+
 class FindPlaylist
 {
   constructor( playlist_name )
@@ -157,6 +183,24 @@ class FindPlaylist
   }
 }
 
+class DetailedTrackList
+{
+  constructor( track_ids )
+  {
+    this.track_ids = track_ids;
+  }
+
+  results( success_function )
+  {
+    var getRequest = new SpotifyGetRequest( "/v1/tracks?ids=" + this.track_ids.join(",") );
+    getRequest.results( function ( responseText ) {
+      var json = JSON.parse( responseText );
+      success_function( json['tracks'] );
+    } );
+
+  }
+  
+}
 class Playlist
 {
   constructor( playlist_name )

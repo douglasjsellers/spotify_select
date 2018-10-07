@@ -109,7 +109,53 @@ function findAndPlaySelectedAlbum( textToSearchFor, retried )
                          } ); 
   
 }
+function fetchAdditionalInformationAboutTracksAndPlayTrackWithHighestViewCount( track_list )
+{
+  var track_ids = track_list.map( function( track )
+                                  {
+                                    return track.id;
+                                  } );
 
+  var details = new DetailedTrackList( track_ids );
+  details.results( function( detailed_tracks )
+                   {
+                     var ordered_details = detailed_tracks.sort(function(a, b){return b.popularity - a.popularity});
+                     playTrack( ordered_details[0] );
+                     
+                   }
+                 );
+
+}
+
+function fetchAlbumTracksAndPlayTrackWithHighestViewCount( album )
+{
+  var albumTrackList = new AlbumTrackList( album.id );
+  albumTrackList.results( function( track_list )
+                          {
+                            fetchAdditionalInformationAboutTracksAndPlayTrackWithHighestViewCount( track_list );
+                          } );
+}
+
+function findAndPlayBestSongOnSelectedAlbum( textToSearchFor, retried )
+{
+  var spotifySearch = new SpotifySearch( textToSearchFor, "album" );
+  spotifySearch.results( function( album )
+                         {
+                           if( album )
+                           {
+                             fetchAlbumTracksAndPlayTrackWithHighestViewCount( album );
+                           } else if( !retried )
+                           {
+                             findAndPlayBestSongOnSelectedAlbum(  tryToCleanText( textToSearchFor ), true );
+                           }
+                           else
+                           {
+                             console.log( "can't find ");
+                           }
+
+                         } ); 
+  
+}
 var actionForSelection = null;
 
 function genericClickHandler( info, tab )
@@ -132,7 +178,11 @@ chrome.runtime.onMessage.addListener(
     } else if( actionForSelection == "play_album" )
     {
       findAndPlaySelectedAlbum( selection.next() );      
+    } else if( actionForSelection == "play_best_song_on_album" )
+    {
+      findAndPlayBestSongOnSelectedAlbum( selection.next() );
     }
+    
     actionForSelection = null;
 
   });
@@ -151,6 +201,14 @@ var play_albumn = chrome.contextMenus.create(
   {
     "title": "Play Highlight Album",
     "id" : "play_album",
+    "contexts":["selection"],
+    "onclick": genericClickHandler
+  } );
+
+var id = chrome.contextMenus.create(
+  {
+    "title": "Play Best Song On Highlighted Album",
+    "id" : "play_best_song_on_album",
     "contexts":["selection"],
     "onclick": genericClickHandler
   } );
