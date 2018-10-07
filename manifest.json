@@ -18,7 +18,7 @@
     "default_popup": "popup.html"
   },
   "background": {
-    "scripts": ["spotify.js"]
+    "scripts": ["spotify.js", "selection.js", "spotify_atoms.js"]
   },
   "externally_connectable": {
     "ids": ["*"],
