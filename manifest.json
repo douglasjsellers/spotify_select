@@ -14,9 +14,6 @@
      "js": ["popup.js"],
      "matches": ["http://*/*", "https://*/*"]
  }],  
-  "browser_action": {
-    "default_popup": "popup.html"
-  },
   "background": {
     "scripts": ["spotify.js", "selection.js", "spotify_atoms.js", "oauth.js"]
   },
