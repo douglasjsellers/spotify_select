@@ -201,7 +201,7 @@ var play_albumn = chrome.contextMenus.create(
 
 var id = chrome.contextMenus.create(
   {
-    "title": "Play Best Song On Highlighted Album",
+    "title": "Play Most Popular Song On Highlighted Album",
     "id" : "play_best_song_on_album",
     "contexts":["selection"],
     "onclick": genericClickHandler
@@ -209,7 +209,7 @@ var id = chrome.contextMenus.create(
 
 var id = chrome.contextMenus.create(
   {
-    "title": "Send Highlighted Songs To Spotify Playlist",
+    "title": "Send Highlighted List of Songs To Spotify Playlist",
     "id" : "add_to_playlist",
     "contexts":["selection"],
     "onclick": genericClickHandler
