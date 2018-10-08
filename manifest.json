@@ -1,6 +1,6 @@
 {
   "name": "Spotify Select",
-  "description": "Simple plugin that allows highlighted text to be converted to a spotify playlist",
+  "description": "Simple extension that allows highlighted text to be brought easily into Spotify",
   "version": "0.1.1",
   "permissions": [
     "http://*/*",
