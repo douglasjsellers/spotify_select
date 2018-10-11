@@ -5,7 +5,8 @@ When a user right clicks they will have the following options:
 
 ## Spotify Select -> Play Highlighted Song
 This option takes the first line of highlighted text from the web page, searches for it on Spotify, and plays the resulting song in the last version of Spotify (mobile, web, desktop) that the user last played a song in.  If nothing can be found then nothing is played.  If only an album is found, then nothing will be played.
-
+![Play Highlighted Song](https://raw.githubusercontent.com/douglasjsellers/spotify_select/master/gifs/play_album.gif)
+        
 ## Spotify Select -> Play Highlighted Album
 This option takes the first line of highlighted text from the web page, searches for it on Spotify, and plays the resulting album (starting with the first song) in the last version of Spotify (mobile, web, desktop) that the user last played a song in.  If nothing can be found then nothing is played.  If only an song is found but no album, then nothing will be played.
 
