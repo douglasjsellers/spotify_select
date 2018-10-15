@@ -1,5 +1,5 @@
 # Spotify Select
-A Chrome extension that allows you to highlight text on a web page, right click, and then send that text to Spotify in a variety of different ways.  This was created to satisfy my own problem of getting songs from the /r/metal subreddit into Spotify.  This extension makes taking songs and albums from a web page and get them in Spotify.
+A [Chrome extension](https://chrome.google.com/webstore/detail/spotify-select/jekgbendlapagldnafgbcffcgjlpijmh/related?authuser=1) that allows you to highlight text on a web page, right click, and then send that text to Spotify in a variety of different ways.  This was created to satisfy my own problem of getting songs from the /r/metal subreddit into Spotify.  This extension makes taking songs and albums from a web page and get them in Spotify.
 
 When a user right clicks they will have the following options:
 
